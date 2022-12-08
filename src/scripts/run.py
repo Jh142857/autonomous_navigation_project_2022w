@@ -8,7 +8,7 @@ import numpy as np
 import rospy
 import rospkg
 
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, PointStamped
 from gazebo_simulation import GazeboSimulation
 
 INIT_POSITION = [-2, 3, 1.57]  # in world frame
@@ -27,6 +27,11 @@ def path_coord_to_gazebo_coord(x, y):
     gazebo_y = y * (RADIUS * 2) + c_shift
 
     return (gazebo_x, gazebo_y)
+
+def pub_goal_point(goal_point):
+    _pub_goal_point = rospy.Publisher('/goal_point', PointStamped, queue_size=1)
+    _pub_goal_point.publish(goal_point)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'test BARN navigation challenge')
@@ -63,9 +68,22 @@ if __name__ == "__main__":
         'roslaunch',
         launch_file,
         'world_name:=' + world_name,
+        # 'world_index:=' + str(args.world_idx),
+        # 'dx:=' + str(INIT_POSITION[0]),
+        # 'dy:=' + str(INIT_POSITION[1]),
+        # 'dtheta:=' + str(INIT_POSITION[2]),
         'gui:=' + ("true" if args.gui else "false")
     ])
-    time.sleep(5)  # sleep to wait until the gazebo being created
+
+    # rviz_tool_path = rospack.get_path('rviz_tool')
+    # rviz_launch_file = join(rviz_tool_path, 'launch', 'visualize.launch')
+    # # 打开rviz可视化
+    # rviz_process = subprocess.Popen([
+    #     'roslaunch',
+    #     rviz_launch_file,
+    # ])
+
+    time.sleep(7)  # sleep to wait until the gazebo being created
     # 初始化节点
     rospy.init_node('gym', anonymous=True) #, log_level=rospy.FATAL)
     rospy.set_param('/use_sim_time', True)
@@ -75,12 +93,19 @@ if __name__ == "__main__":
     
     init_coor = (INIT_POSITION[0], INIT_POSITION[1])
     goal_coor = (INIT_POSITION[0] + GOAL_POSITION[0], INIT_POSITION[1] + GOAL_POSITION[1])
+
+    # 发送目标位置
+    goal_point = PointStamped()
+    goal_point.header.frame_id = 'odom'
+    goal_point.point.x = GOAL_POSITION[0]
+    goal_point.point.y = GOAL_POSITION[1]
+
     # 获取当前机器人的位置信息
     pos = gazebo_sim.get_model_state().pose.position
     curr_coor = (pos.x, pos.y)
     collided = True
     
-    # check whether the robot is reset, the collision is False
+    # 如果当前位置离机器人位置大于0.1或collided，reset机器人至初始位置
     while compute_distance(init_coor, curr_coor) > 0.1 or collided:
         gazebo_sim.reset() # Reset to the initial position
         pos = gazebo_sim.get_model_state().pose.position
@@ -103,7 +128,8 @@ if __name__ == "__main__":
     # if the global map is needed, read the map files, e.g. /jackal_helper/worlds/BARN/map_files/map_pgm_xxx.pgm
     
     # DWA example
-    launch_file = join(base_path, '..', 'jackal_helper/launch/move_base_DWA.launch')
+    launch_file = join(base_path, '..', 'jackal_helper/launch/move_base_teb.launch')
+    # launch_file = join(base_path, '..', 'jackal_helper/launch/move_base_DWA.launch')
     nav_stack_process = subprocess.Popen([
         'roslaunch',
         launch_file,
@@ -153,7 +179,8 @@ if __name__ == "__main__":
         pos = gazebo_sim.get_model_state().pose.position
         curr_coor = (pos.x, pos.y)
         # 打印当前的位置信息  \r:返回当前行的最开始位置
-        print("Time: %.2f (s), x: %.2f (m), y: %.2f (m)" %(curr_time - start_time, *curr_coor), end="\r")
+        print("Time: %.2f (s), x: %.2f (m), y: %.2f (m), Distance to goal: %.2f" %(curr_time - start_time, *curr_coor, compute_distance(goal_coor, curr_coor)), end="\r")
+        pub_goal_point(goal_point)
         collided = gazebo_sim.get_hard_collision()
         # 每0.1秒循环一次，否则sleep
         while rospy.get_time() - curr_time < 0.1:
@@ -203,3 +230,4 @@ if __name__ == "__main__":
     
     # 终止gui程序
     gazebo_process.terminate()
+    nav_stack_process.terminate()
