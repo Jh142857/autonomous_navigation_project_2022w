@@ -68,10 +68,10 @@ if __name__ == "__main__":
         'roslaunch',
         launch_file,
         'world_name:=' + world_name,
-        # 'world_index:=' + str(args.world_idx),
-        # 'dx:=' + str(INIT_POSITION[0]),
-        # 'dy:=' + str(INIT_POSITION[1]),
-        # 'dtheta:=' + str(INIT_POSITION[2]),
+        'world_index:=' + str(args.world_idx),
+        'dx:=' + str(INIT_POSITION[0]),
+        'dy:=' + str(INIT_POSITION[1]),
+        'dtheta:=' + str(INIT_POSITION[2]),
         'gui:=' + ("true" if args.gui else "false")
     ])
 

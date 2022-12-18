@@ -1,13 +1,18 @@
 # autonomous_navigation_project_2022w
-BARN Challenge in ICRA 2022 as course project
+2022冬 移动机器人大作业
 
 ## TODO
-implement your own navigation algorithms in run.py
+在run.py中改进导航算法，需要使得机器人导航至指定位置。
 
 ## Run Simulations
+首先编译环境：
+```
+catkin_make
+```
+然后运行仿真：
 ```
 source devel/setup.sh
-python3 run.py --gui --world_idx xxx
+python3 src/scripts/run.py --gui --world_idx 0
 ```
 # Acknowledgements
 Code references

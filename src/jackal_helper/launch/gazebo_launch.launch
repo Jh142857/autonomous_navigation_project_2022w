@@ -7,6 +7,8 @@
   <arg name="dx" default="0" />
   <arg name="dy" default="0" />
   <arg name="dtheta" default="0" />
+  <arg name="rviz" default="true" />
+  <arg name="params" default="false" />
 
   <!-- Short-term hack to support the original front_laser:=true argument for spawning
        the simulator. This will be removed in favour of using the config:=x arg instead. -->
@@ -43,15 +45,19 @@
 
   <node pkg="jackal_helper" type="collision_publisher_node" name="collision_publisher_node" />
 
-  <!-- <node name="static_map_broadcaster" pkg="tf2_ros" type="static_transform_publisher" args="$(arg dx) $(arg dy) 0 0 0 0 map odom"/> -->
-  <!-- <node name="map_server" pkg="map_server" type="map_server"
+  <node name="static_map_broadcaster" pkg="tf2_ros" type="static_transform_publisher" args="$(arg dx) $(arg dy) 0 0 0 0 map odom"/> -->
+  <node name="map_server" pkg="map_server" type="map_server"
         args="$(find jackal_helper)/worlds/BARN/map_files/yaml_$(arg world_index).yaml">
     <param name="frame_id" value="map"/>
-  </node> -->
+  </node>
 
   <!-- rviz -->
-  <include file="$(find rviz_tool)/launch/visualize.launch" />
+  <group if="$(arg rviz)"> 
+    <include file="$(find rviz_tool)/launch/visualize.launch" />
+  </group>
 
   <!-- tune params -->
-  <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure"/>
+  <group if="$(arg params)"> 
+    <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_reconfigure"/>
+  </group>
 </launch>
